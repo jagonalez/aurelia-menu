@@ -191,16 +191,6 @@ define('routes/birds/routes/breeds/index',["require", "exports"], function (requ
     exports.Breeds = Breeds;
 });
 
-define('routes/birds/routes/toys/index',["require", "exports"], function (require, exports) {
-    "use strict";
-    var Toys = (function () {
-        function Toys() {
-        }
-        return Toys;
-    }());
-    exports.Toys = Toys;
-});
-
 define('routes/birds/routes/care/index',["require", "exports"], function (require, exports) {
     "use strict";
     var Care = (function () {
@@ -211,14 +201,14 @@ define('routes/birds/routes/care/index',["require", "exports"], function (requir
     exports.Care = Care;
 });
 
-define('routes/cats/routes/care/index',["require", "exports"], function (require, exports) {
+define('routes/birds/routes/toys/index',["require", "exports"], function (require, exports) {
     "use strict";
-    var Care = (function () {
-        function Care() {
+    var Toys = (function () {
+        function Toys() {
         }
-        return Care;
+        return Toys;
     }());
-    exports.Care = Care;
+    exports.Toys = Toys;
 });
 
 define('routes/cats/routes/breeds/index',["require", "exports"], function (require, exports) {
@@ -229,6 +219,16 @@ define('routes/cats/routes/breeds/index',["require", "exports"], function (requi
         return Breeds;
     }());
     exports.Breeds = Breeds;
+});
+
+define('routes/cats/routes/care/index',["require", "exports"], function (require, exports) {
+    "use strict";
+    var Care = (function () {
+        function Care() {
+        }
+        return Care;
+    }());
+    exports.Care = Care;
 });
 
 define('routes/cats/routes/toys/index',["require", "exports"], function (require, exports) {

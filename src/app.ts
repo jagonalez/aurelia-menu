@@ -22,8 +22,8 @@ export class App {
   }
 
   public mapNavigation(router: Router, config?: RouteConfig) {
-    let promises = [];
-    let c = config ? config : {route: null};
+    const promises = [];
+    const c = config ? config : {route: null};
     router.navigation.forEach( nav => {
       if (c.route !== nav.config.route) {
         promises.push(this.mapNavigationItem(nav, router));
@@ -35,38 +35,38 @@ export class App {
     return Promise.all(promises)
   }
 
-  public mapNavigationItem(nav: NavModel, router: Router) {
-    const config = <any>nav.config
-    let navModel = nav
+public mapNavigationItem(nav: NavModel, router: Router) {
+  const config = <any>nav.config
+  const navModel = nav
 
-    if (config.moduleId) {
-      let childContainer = router.container.createChild();
-      let instruction = {
-        viewModel: relativeToFile(config.moduleId, Origin.get(router.container.viewModel.constructor).moduleId),
-        childContainer: childContainer,
-        view: config.view || config.viewStrategy,
-      };
-      return this.compositionEngine.ensureViewModel(<any>instruction)
-      .then((context: CompositionContext) => {
-        if ('configureRouter' in context.viewModel) {
-          let childRouter = new Router(childContainer, router.history)
-          let childConfig = new RouterConfiguration()
+  if (config.moduleId) {
+    const childContainer = router.container.createChild();
+    const instruction = {
+      viewModel: relativeToFile(config.moduleId, Origin.get(router.container.viewModel.constructor).moduleId),
+      childContainer: childContainer,
+      view: config.view || config.viewStrategy,
+    };
+    return this.compositionEngine.ensureViewModel(<any>instruction)
+    .then((context: CompositionContext) => {
+      if ('configureRouter' in context.viewModel) {
+        const childRouter = new Router(childContainer, router.history)
+        const childConfig = new RouterConfiguration()
 
-          context.viewModel.configureRouter(childConfig, childRouter)
-          childConfig.exportToRouter(childRouter)
+        context.viewModel.configureRouter(childConfig, childRouter)
+        childConfig.exportToRouter(childRouter)
 
-          childRouter.navigation.forEach( nav => {
-            nav.href = `${navModel.href}/${nav.config.href ? nav.config.href : nav.config.name}`
-          })
-          return this.mapNavigation(childRouter, config)
-            .then(r => navModel.navigation = r)
-            .then( () => navModel);
-        }
-        return navModel
-      })
-    }
-    return Promise.resolve(navModel);
+        childRouter.navigation.forEach( nav => {
+          nav.href = `${navModel.href}/${nav.config.href ? nav.config.href : nav.config.name}`
+        })
+        return this.mapNavigation(childRouter, config)
+          .then(r => navModel.navigation = r)
+          .then( () => navModel);
+      }
+      return navModel
+    })
   }
+  return Promise.resolve(navModel);
+}
   attached() {
     return this.mapNavigation(this.router)
   }
