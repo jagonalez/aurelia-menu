@@ -1,6 +1,11 @@
 <template>
   <require from="./resources/elements/nav-menu.html"></require>
-  <nav-menu router.bind="router"></nav-menu>
+  <style>
+    li > a.active {
+      font-weight: bold;
+    }
+  </style>
+  <nav-menu navigation.bind="navigationMenu"></nav-menu>
   <h1>Aurelia Menu with Child Routes example</h1>
   <div>
     <router-view></router-view>

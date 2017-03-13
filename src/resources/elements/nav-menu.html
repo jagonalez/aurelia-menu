@@ -1,8 +1,8 @@
-<template bindable="router">
+<template bindable="navigation">
   <ul>
-    <li repeat.for="row of router.navigation" class="${row.isActive ? 'active' : ''}">
-      <a href.bind="row.href">${row.title}</a>
-      <nav-menu if.bind="row.navigation" router.bind="row"></nav-menu>
+    <li repeat.for="row of navigation">
+      <a href.bind="row.href" class="${row.isActive ? 'active' : ''}">${row.title}</a>
+      <nav-menu if.bind="row.navigation" navigation.bind="row.navigation"></nav-menu>
     </li>
   </ul>
 </template>

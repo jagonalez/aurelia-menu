@@ -7,11 +7,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-define('app',["require", "exports", "aurelia-router", "aurelia-path", "aurelia-templating", "aurelia-framework", "aurelia-metadata"], function (require, exports, aurelia_router_1, aurelia_path_1, aurelia_templating_1, aurelia_framework_1, aurelia_metadata_1) {
+define('app',["require", "exports", "aurelia-router", "aurelia-path", "aurelia-templating", "aurelia-event-aggregator", "aurelia-framework", "aurelia-metadata"], function (require, exports, aurelia_router_1, aurelia_path_1, aurelia_templating_1, aurelia_event_aggregator_1, aurelia_framework_1, aurelia_metadata_1) {
     "use strict";
     var App = (function () {
-        function App(compositionEngine) {
+        function App(compositionEngine, eventAggregator) {
             this.compositionEngine = compositionEngine;
+            this.eventAggregator = eventAggregator;
         }
         App.prototype.configureRouter = function (config, router) {
             config.title = 'Child Route Menu Example';
@@ -40,7 +41,7 @@ define('app',["require", "exports", "aurelia-router", "aurelia-path", "aurelia-t
         App.prototype.mapNavigationItem = function (nav, router) {
             var _this = this;
             var config = nav.config;
-            var navModel = nav;
+            var navModel = Object.assign({}, nav);
             if (config.moduleId) {
                 var childContainer_1 = router.container.createChild();
                 var instruction = {
@@ -56,7 +57,7 @@ define('app',["require", "exports", "aurelia-router", "aurelia-path", "aurelia-t
                         context.viewModel.configureRouter(childConfig, childRouter);
                         childConfig.exportToRouter(childRouter);
                         childRouter.navigation.forEach(function (nav) {
-                            nav.href = navModel.href + "/" + (nav.config.href ? nav.config.href : nav.config.name);
+                            nav.href = navModel.href + "/" + (nav.config.href ? nav.config.href : nav.config.route);
                         });
                         return _this.mapNavigation(childRouter, config)
                             .then(function (r) { return navModel.navigation = r; })
@@ -67,14 +68,39 @@ define('app',["require", "exports", "aurelia-router", "aurelia-path", "aurelia-t
             }
             return Promise.resolve(navModel);
         };
+        App.prototype.updateNavModels = function (navModels, instruction, instructionDepth, resetDepth) {
+            var _this = this;
+            navModels.forEach(function (navModel) {
+                if (resetDepth >= instructionDepth)
+                    navModel.isActive = false;
+                if (navModel.href === instruction.config.navModel.href)
+                    navModel.isActive = true;
+                if (navModel.navigation) {
+                    _this.updateNavModels(navModel.navigation, instruction, instructionDepth, resetDepth + 1);
+                }
+            });
+        };
+        App.prototype.updateNavigationMenu = function (instruction, depth) {
+            this.updateNavModels(this.navigationMenu, instruction, depth, 0);
+            if ('childNavigationInstruction' in instruction.viewPortInstructions.default) {
+                this.updateNavigationMenu(instruction.viewPortInstructions.default.childNavigationInstruction, depth + 1);
+            }
+        };
         App.prototype.attached = function () {
-            return this.mapNavigation(this.router);
+            var _this = this;
+            this.subscriber = this.eventAggregator.subscribe('router:navigation:complete', function (response) { _this.updateNavigationMenu(response.instruction, 0); });
+            return this.mapNavigation(this.router)
+                .then(function (navModel) { return _this.navigationMenu = navModel; })
+                .then(function () { return _this.updateNavigationMenu(_this.router.currentInstruction, 0); });
+        };
+        App.prototype.detached = function () {
+            this.subscriber.dispose();
         };
         return App;
     }());
     App = __decorate([
         aurelia_framework_1.autoinject(),
-        __metadata("design:paramtypes", [aurelia_templating_1.CompositionEngine])
+        __metadata("design:paramtypes", [aurelia_templating_1.CompositionEngine, aurelia_event_aggregator_1.EventAggregator])
     ], App);
     exports.App = App;
 });
@@ -159,7 +185,7 @@ define('routes/dogs/index',["require", "exports"], function (require, exports) {
         function Dogs() {
         }
         Dogs.prototype.configureRouter = function (config, router) {
-            config.title = "Birds";
+            config.title = "Dogs";
             config.map([
                 { route: ['', 'care'], name: 'care', moduleId: './routes/care/index', nav: true, title: 'Caring' },
                 { route: 'breeds', name: 'breeds', moduleId: './routes/breeds/index', nav: true, title: 'Breeds' },
@@ -271,8 +297,8 @@ define('routes/dogs/routes/toys/index',["require", "exports"], function (require
     exports.Toys = Toys;
 });
 
-define('text!app.html', ['module'], function(module) { module.exports = "<template><require from=./resources/elements/nav-menu.html></require><nav-menu router.bind=router></nav-menu><h1>Aurelia Menu with Child Routes example</h1><div><router-view></router-view></div></template>"; });
-define('text!resources/elements/nav-menu.html', ['module'], function(module) { module.exports = "<template bindable=router><ul><li repeat.for=\"row of router.navigation\" class=\"${row.isActive ? 'active' : ''}\"><a href.bind=row.href>${row.title}</a><nav-menu if.bind=row.navigation router.bind=row></nav-menu></li></ul></template>"; });
+define('text!app.html', ['module'], function(module) { module.exports = "<template><require from=./resources/elements/nav-menu.html></require><style>li>a.active{font-weight:700}</style><nav-menu navigation.bind=navigationMenu></nav-menu><h1>Aurelia Menu with Child Routes example</h1><div><router-view></router-view></div></template>"; });
+define('text!resources/elements/nav-menu.html', ['module'], function(module) { module.exports = "<template bindable=navigation><ul><li repeat.for=\"row of navigation\"><a href.bind=row.href class=\"${row.isActive ? 'active' : ''}\">${row.title}</a><nav-menu if.bind=row.navigation navigation.bind=row.navigation></nav-menu></li></ul></template>"; });
 define('text!routes/birds/index.html', ['module'], function(module) { module.exports = "<template><h2>Birds Page</h2><router-view></router-view></template>"; });
 define('text!routes/cats/index.html', ['module'], function(module) { module.exports = "<template><h2>Cats Page</h2><router-view></router-view></template>"; });
 define('text!routes/dogs/index.html', ['module'], function(module) { module.exports = "<template><h2>Dogs Page</h2><router-view></router-view></template>"; });
